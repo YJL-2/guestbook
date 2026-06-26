@@ -25,29 +25,39 @@ jobs:
         uses: docker/login-action@v2
         with:
           registry: crlyj.azurecr.io/
-          username: ${{ secrets.AZUREAPPSERVICE_CONTAINERUSERNAME_E45A489C1F9D4E848C633B164B7CD04C }}
-          password: ${{ secrets.AZUREAPPSERVICE_CONTAINERPASSWORD_27C6BA3A1CDD44FA9339DA68EC6F523D }}
+          username: ${{ secrets.AZUREAPPSERVICE_CONTAINERUSERNAME_8E0E69CCC1104349BF5BC3483DF30934 }}
+          password: ${{ secrets.AZUREAPPSERVICE_CONTAINERPASSWORD_4DD7E7640A794C8C985FC21BA73BF2FD }}
 
       - name: Build and push container image to registry
         uses: docker/build-push-action@v3
         with:
           context: .
           push: true
-          tags: crlyj.azurecr.io/${{ secrets.AZUREAPPSERVICE_CONTAINERUSERNAME_E45A489C1F9D4E848C633B164B7CD04C }}/guestbook:${{ github.sha }}
+          tags: crlyj.azurecr.io/${{ secrets.AZUREAPPSERVICE_CONTAINERUSERNAME_8E0E69CCC1104349BF5BC3483DF30934 }}/crlyj/guestbook:${{ github.sha }}
           file: ./Dockerfile
 
   deploy:
     runs-on: ubuntu-latest
-    
+    permissions:
+      id-token: write #This is required for requesting the JWT
+      contents: read #This is required for actions/checkout
+
     needs: build
     
     steps:
       
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_B2578866A15A4364AF1791441C7D2FD7 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_113DAE866FBA41BB972C7BAB00CE9DAE }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_1D05324D501B4C0E9C875D0B0C123CAC }}
+
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v2
         with:
           app-name: 'aci-gb-lyj'
           slot-name: 'Production'
-          images: 'crlyj.azurecr.io/${{ secrets.AZUREAPPSERVICE_CONTAINERUSERNAME_E45A489C1F9D4E848C633B164B7CD04C }}/guestbook:${{ github.sha }}'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_E5FFAA7570CF4C518068003520D1020D }}
+          images: 'crlyj.azurecr.io/${{ secrets.AZUREAPPSERVICE_CONTAINERUSERNAME_8E0E69CCC1104349BF5BC3483DF30934 }}/crlyj/guestbook:${{ github.sha }}'
+          
